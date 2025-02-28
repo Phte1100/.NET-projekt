@@ -1,65 +1,35 @@
 @model IEnumerable<moment5.Models.Ad>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Annonser";
 }
 
-<h1>Index</h1>
+<h1 class="mb-4">Alla annonser</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create" class="btn btn-success mb-3">Lägg till ny annons</a>
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ImageUrl)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedBy)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ImageUrl)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+
+<div class="container">
+    <div class="row">
+        @foreach (var ad in Model)
+        {
+            <div class="col-md-4 col-lg-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="~/images/@ad.ImageName" class="card-img-top img-fluid" alt="@ad.Title" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">@ad.Title</h5>
+                        <p class="card-text text-muted">@ad.category?.Name</p>
+                        <p class="card-text">@ad.Description.Substring(0, Math.Min(50, ad.Description.Length))...</p>
+                        <p class="card-text"><strong>@ad.Price kr</strong></p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
+                        <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
+                        <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

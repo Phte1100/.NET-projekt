@@ -8,11 +8,11 @@ using projekt.Data;
 
 #nullable disable
 
-namespace projekt.Data.Migrations
+namespace projekt.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250226132001_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250227100432_UpdateAdModel")]
+    partial class UpdateAdModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -222,6 +222,9 @@ namespace projekt.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("TEXT");
 
@@ -230,7 +233,7 @@ namespace projekt.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("ImageName")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Price")
@@ -246,7 +249,24 @@ namespace projekt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Ads");
+                });
+
+            modelBuilder.Entity("moment5.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -298,6 +318,20 @@ namespace projekt.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("moment5.Models.Ad", b =>
+                {
+                    b.HasOne("moment5.Models.Category", "category")
+                        .WithMany("Ads")
+                        .HasForeignKey("CategoryId");
+
+                    b.Navigation("category");
+                });
+
+            modelBuilder.Entity("moment5.Models.Category", b =>
+                {
+                    b.Navigation("Ads");
                 });
 #pragma warning restore 612, 618
         }
