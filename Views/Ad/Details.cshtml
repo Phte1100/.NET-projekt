@@ -6,55 +6,73 @@
 
 <h1>Details</h1>
 
-<div>
-    <h4>Ad</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
+@if (Model.Images != null && Model.Images.Any())
+{
+    <div id="adCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            @for (int i = 0; i < Model.Images.Count; i++)
+            {
+                <div class="carousel-item @(i == 0 ? "active" : "")">
+                    <img src="~/images/@Model.Images[i].ImageName" class="d-block w-100 img-fluid" alt="Annonsbild">
+                </div>
+            }
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#adCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Föregående</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#adCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Nästa</span>
+        </button>
+    </div>
+}
+else
+{
+    <p>Ingen bild tillgänglig.</p>
+}
+
+    <dl class="row mt-3">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Title)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Title)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Description)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Description)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Price)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Price) kr
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ImageName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ImageName)
-        </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.status)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.status)
+        <dd class="col-sm-10">
+            @(Model.status ? "Aktiv" : "Inaktiv")
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.CreatedBy)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.CreatedBy)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.category)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.category.Name)
         </dd>
     </dl>
 </div>
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Redigera</a>
+    <a asp-action="Index" class="btn btn-secondary">Tillbaka till listan</a>
 </div>

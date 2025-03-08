@@ -11,8 +11,8 @@ using projekt.Data;
 namespace projekt.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250227100432_UpdateAdModel")]
-    partial class UpdateAdModel
+    [Migration("20250228115432_AddMultipleImagesSupport")]
+    partial class AddMultipleImagesSupport
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -233,9 +233,6 @@ namespace projekt.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ImageName")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("Price")
                         .HasColumnType("INTEGER");
 
@@ -252,6 +249,26 @@ namespace projekt.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Ads");
+                });
+
+            modelBuilder.Entity("moment5.Models.AdImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ImageName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdId");
+
+                    b.ToTable("AdImages");
                 });
 
             modelBuilder.Entity("moment5.Models.Category", b =>
@@ -327,6 +344,22 @@ namespace projekt.Migrations
                         .HasForeignKey("CategoryId");
 
                     b.Navigation("category");
+                });
+
+            modelBuilder.Entity("moment5.Models.AdImage", b =>
+                {
+                    b.HasOne("moment5.Models.Ad", "Ad")
+                        .WithMany("Images")
+                        .HasForeignKey("AdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ad");
+                });
+
+            modelBuilder.Entity("moment5.Models.Ad", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("moment5.Models.Category", b =>

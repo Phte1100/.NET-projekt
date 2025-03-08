@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http; // Behövs för IFormFile
 
 namespace moment5.Models
 {
@@ -22,12 +23,6 @@ namespace moment5.Models
         [Display(Name = "Pris")]
         public required int Price { get; set; }
 
-        public string? ImageName { get; set; }
-
-        [NotMapped]
-        [Display(Name = "Bild")]
-        public IFormFile? ImageFile { get; set; }
-
         public bool status { get; set; } = true; // Om annonsen är aktiv eller inte
 
         [Display(Name = "Skapad av")]
@@ -35,5 +30,12 @@ namespace moment5.Models
 
         public int? CategoryId { get; set; }
         public Category? category { get; set; }
+
+        // Relation till bilder
+        public virtual List<AdImage> Images { get; set; } = new();
+
+        // För att ta emot uppladdade bilder (icke-mappad till DB)
+        [NotMapped]
+        public List<IFormFile>? ImageFiles { get; set; }
     }
 }

@@ -5,24 +5,24 @@
 namespace projekt.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateAdModel : Migration
+    public partial class AddMultipleImagesSupport : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "ImageUrl",
-                table: "Ads",
-                newName: "ImageName");
+            migrationBuilder.DropColumn(
+                name: "ImageName",
+                table: "Ads");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
+            migrationBuilder.AddColumn<string>(
                 name: "ImageName",
                 table: "Ads",
-                newName: "ImageUrl");
+                type: "TEXT",
+                nullable: true);
         }
     }
 }

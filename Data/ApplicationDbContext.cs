@@ -15,5 +15,8 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<Ad> Ads { get; set; }
     public DbSet<Category> Categories { get; set; }
 
+    public DbSet<AdImage> AdImages { get; set; }
+
+
     
 }

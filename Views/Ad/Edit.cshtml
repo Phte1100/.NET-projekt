@@ -10,34 +10,62 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
+            
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
                 <input asp-for="Description" class="form-control" />
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Price" class="control-label"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
+
+            <!-- Visa befintliga bilder -->
             <div class="form-group">
-                <label asp-for="ImageName" class="control-label"></label>
-                <input asp-for="ImageName" class="form-control" />
-                <span asp-validation-for="ImageName" class="text-danger"></span>
+                <label class="control-label">Befintliga bilder</label>
+                <div class="d-flex flex-wrap">
+                    @if (Model.Images != null && Model.Images.Any())
+                    {
+                        foreach (var image in Model.Images)
+                        {
+                            <div class="m-2 text-center">
+                                <img src="~/images/@image.ImageName" class="img-thumbnail" style="width: 100px; height: auto;" />
+                                <p class="small">@image.ImageName</p>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>Ingen bild tillgänglig</p>
+                    }
+                </div>
             </div>
+
+            <!-- Ladda upp nya bilder -->
+            <div class="form-group">
+                <label asp-for="ImageFiles" class="control-label">Lägg till nya bilder</label>
+                <input asp-for="ImageFiles" type="file" multiple class="form-control" accept="image/*" />
+                <span asp-validation-for="ImageFiles" class="text-danger"></span>
+            </div>
+
             <div class="form-group">
                 <label asp-for="CategoryId" class="control-label"></label>
                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

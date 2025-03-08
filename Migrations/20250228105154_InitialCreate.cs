@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace projekt.Migrations
 {
     /// <inheritdoc />
-    public partial class InitalCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -178,7 +178,7 @@ namespace projekt.Migrations
                     Title = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     Price = table.Column<int>(type: "INTEGER", nullable: false),
-                    ImageUrl = table.Column<string>(type: "TEXT", nullable: true),
+                    ImageName = table.Column<string>(type: "TEXT", nullable: true),
                     status = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
                     CategoryId = table.Column<int>(type: "INTEGER", nullable: true)

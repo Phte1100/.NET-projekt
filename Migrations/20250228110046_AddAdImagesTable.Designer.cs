@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using projekt.Data;
 
@@ -10,9 +11,11 @@ using projekt.Data;
 namespace projekt.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250228110046_AddAdImagesTable")]
+    partial class AddAdImagesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.2");
@@ -230,6 +233,9 @@ namespace projekt.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ImageName")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Price")
                         .HasColumnType("INTEGER");
 
@@ -346,17 +352,12 @@ namespace projekt.Migrations
             modelBuilder.Entity("moment5.Models.AdImage", b =>
                 {
                     b.HasOne("moment5.Models.Ad", "Ad")
-                        .WithMany("Images")
+                        .WithMany()
                         .HasForeignKey("AdId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Ad");
-                });
-
-            modelBuilder.Entity("moment5.Models.Ad", b =>
-                {
-                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("moment5.Models.Category", b =>

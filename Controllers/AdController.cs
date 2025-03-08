@@ -28,8 +28,11 @@ namespace projekt.Controllers
         // GET: Ad
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Ads.Include(a => a.category);
-            return View(await applicationDbContext.ToListAsync());
+                var ads = _context.Ads
+        .Include(a => a.Images)  // 🔹 LÄGG TILL DENNA RAD
+        .Include(a => a.category);
+
+        return View(await ads.ToListAsync());
         }
 
         // GET: Ad/Details/5
@@ -41,6 +44,7 @@ namespace projekt.Controllers
             }
 
             var ad = await _context.Ads
+                .Include(a => a.Images)
                 .Include(a => a.category)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (ad == null)
@@ -62,64 +66,72 @@ namespace projekt.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageFile,status,CategoryId")] Ad ad)
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageFiles,status,CategoryId")] Ad ad)
+{
+    if (ModelState.IsValid)
+    {
+        ad.Images = new List<AdImage>();
+
+        if (ad.ImageFiles != null && ad.ImageFiles.Any())
         {
-            if (ModelState.IsValid)
+            foreach (var imageFile in ad.ImageFiles)
             {
-                // kopiera filen till wwwroot/images
-                if(ad.ImageFile != null)
-{ 
-                    // Generera unikt filnamn MED FILÄNDELSE
-                    string fileName = Path.GetFileNameWithoutExtension(ad.ImageFile.FileName);
-                    string extension = Path.GetExtension(ad.ImageFile.FileName);
-                    ad.ImageName = fileName.Replace(" ", String.Empty) + DateTime.Now.ToString("yymmssfff") + extension; // Filändelse läggs till
-                    
-                    string path = Path.Combine(wwwRootPath, "images", ad.ImageName); // Spara filen med korrekt namn
+                string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
+                string extension = Path.GetExtension(imageFile.FileName);
+                string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
+                string filePath = Path.Combine(wwwRootPath, "images", uniqueFileName);
 
-                    // Lagra i filsystemet
-                    using (var fileStream = new FileStream(path, FileMode.Create))
-                    {
-                        await ad.ImageFile.CopyToAsync(fileStream);
-                        await Task.Delay(200); // Vänta 200ms innan vidare hantering
-                    }
-
-                    // Skapa miniatyrbild
-                    CreateImageFiles(ad.ImageName);
-                } 
-                else
+                // Spara bilden
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    ad.ImageName = "default.png";
+                    await imageFile.CopyToAsync(fileStream);
                 }
 
+                // Skapa miniatyr
+                CreateImageFiles(uniqueFileName);
 
-                _context.Add(ad);
 
-                // skapad av användar
-                ad.CreatedBy = User.Identity?.Name ?? "Unknown";
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                // Lägg till i databasen
+                ad.Images.Add(new AdImage { ImageName = uniqueFileName });
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
-            return View(ad);
         }
+        else
+        {
+            ad.Images.Add(new AdImage { ImageName = "default.png" });
+        }
+
+        ad.CreatedBy = User.Identity?.Name ?? "Okänd";
+        _context.Add(ad);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
+    return View(ad);
+}
 
         // GET: Ad/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+public async Task<IActionResult> Edit(int? id)
+{
+    if (id == null)
+    {
+        return NotFound();
+    }
 
-            var ad = await _context.Ads.FindAsync(id);
-            if (ad == null)
-            {
-                return NotFound();
-            }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
-            return View(ad);
-        }
+    var ad = await _context.Ads
+        .Include(a => a.Images)  // 🔹 LÄGG TILL DENNA RAD
+        .FirstOrDefaultAsync(m => m.Id == id);
+
+    if (ad == null)
+    {
+        return NotFound();
+    }
+
+    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
+    return View(ad);
+}
+
 
         // POST: Ad/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.

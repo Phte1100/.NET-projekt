@@ -11,8 +11,8 @@ using projekt.Data;
 namespace projekt.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250227084617_InitalCreate")]
-    partial class InitalCreate
+    [Migration("20250228105154_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -233,7 +233,7 @@ namespace projekt.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("ImageName")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Price")

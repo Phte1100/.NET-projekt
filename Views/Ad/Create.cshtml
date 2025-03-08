@@ -9,44 +9,124 @@
 <h4>Ad</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" enctype="multipart/form-data">
+    <div class="col-md-6">
+        <form asp-action="Create" enctype="multipart/form-data" id="adForm">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <textarea asp-for="Description" class="form-control"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Price" class="control-label"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <label asp-for="ImageFile" class="control-label"></label>
-                <input asp-for="ImageFile" class="form-control" accept="image/*" />
-                <span asp-validation-for="ImageFile" class="text-danger"></span>
+                <label asp-for="ImageFiles" class="control-label"></label>
+                <input asp-for="ImageFiles" type="file" multiple class="form-control" accept="image/*" id="mainImageUpload" />
+                <span asp-validation-for="ImageFiles" class="text-danger"></span>
             </div>
+
+            <p>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#imageUploadModal">Lägg till fler bilder</a>
+            </p>
+
+            <!-- Modal -->
+            <div class="modal fade" id="imageUploadModal" tabindex="-1" aria-labelledby="imageUploadModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Lägg till fler bilder</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="file" id="extraImages" multiple class="form-control" accept="image/*" />
+                            <div id="selectedImages" class="mt-2"></div> <!-- Här visas valda bilder -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                            <button type="button" class="btn btn-primary" id="addImages">Lägg till bilder</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label asp-for="CategoryId" class="control-label"></label>
-                <select asp-for="CategoryId" class ="form-control" asp-items="ViewBag.CategoryId"></select>
+                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Skapa annons" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Tillbaka</a>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let extraImagesInput = document.getElementById("extraImages");
+            let mainImageUpload = document.getElementById("mainImageUpload");
+            let addImagesButton = document.getElementById("addImages");
+            let selectedImagesContainer = document.getElementById("selectedImages");
+
+            let allFiles = []; // Lista för att spara valda filer
+
+            // Visa valda bilder i modalen
+            extraImagesInput.addEventListener("change", function (event) {
+                selectedImagesContainer.innerHTML = ""; // Rensa tidigare valda bilder
+                for (let file of event.target.files) {
+                    allFiles.push(file); // Lägg till filerna i listan
+
+                    let imgPreview = document.createElement("p");
+                    imgPreview.textContent = file.name;
+                    selectedImagesContainer.appendChild(imgPreview);
+                }
+            });
+
+            // Lägg till bilder från modalen till huvudformuläret
+            addImagesButton.addEventListener("click", function () {
+                let dataTransfer = new DataTransfer();
+
+                // Lägg till redan valda bilder från huvudfältet
+                for (let file of mainImageUpload.files) {
+                    dataTransfer.items.add(file);
+                }
+
+                // Lägg till extra bilder från modalen
+                for (let file of allFiles) {
+                    dataTransfer.items.add(file);
+                }
+
+                // Uppdatera huvudfilinputen
+                mainImageUpload.files = dataTransfer.files;
+
+                // Stäng modalen
+                let modal = bootstrap.Modal.getInstance(document.getElementById("imageUploadModal"));
+                modal.hide();
+
+                // Återställ extra filinputen i modalen
+                extraImagesInput.value = "";
+                selectedImagesContainer.innerHTML = "";
+                allFiles = [];
+            });
+        });
+    </script>
 }

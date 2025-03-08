@@ -16,7 +16,15 @@
         {
             <div class="col-md-4 col-lg-3 mb-4">
                 <div class="card h-100 shadow-sm">
-                    <img src="~/images/@ad.ImageName" class="card-img-top img-fluid" alt="@ad.Title" style="height: 200px; object-fit: cover;">
+                    @if (ad.Images != null && ad.Images.Any())
+                        {
+                            <img src="@Url.Content("~/images/" + ad.Images.First().ImageName)" class="card-img-top img-fluid" alt="@ad.Title">
+
+                        }
+                        else
+                        {
+                            <img src="~/images/default.png" class="card-img-top img-fluid" alt="Ingen bild">
+                        }
                     <div class="card-body">
                         <h5 class="card-title">@ad.Title</h5>
                         <p class="card-text text-muted">@ad.category?.Name</p>
@@ -28,7 +36,7 @@
                         <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
                         <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
                     </div>
-                </div>
+                </div>        
             </div>
         }
     </div>
