@@ -1,0 +1,44 @@
+@model IEnumerable<moment5.Models.Ad>
+
+@{
+    ViewData["Title"] = "Mina annonser";
+}
+
+<h1>Mina annonser</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Titel</th>
+            <th>Pris</th>
+            <th>Kategori</th>
+            <th>Status</th>
+            <th>Åtgärder</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var ad in Model)
+        {
+            <tr>
+                <td>@ad.Title</td>
+                <td>@ad.Price kr</td>
+                <td>@ad.category?.Name</td>
+                <td>
+                    @if (ad.Status)
+                    {
+                        <span class="text-success">Till salu</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger">Såld till @ad.Buyer</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
+                    <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
+                    <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

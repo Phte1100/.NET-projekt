@@ -1,78 +1,100 @@
 @model moment5.Models.Ad
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Annonsdetaljer";
 }
 
-<h1>Details</h1>
-
-@if (Model.Images != null && Model.Images.Any())
-{
-    <div id="adCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-            @for (int i = 0; i < Model.Images.Count; i++)
+<div class="container mt-4">
+    <div class="row">
+        <!-- 🔹 Bildsektion med carousel -->
+        <div class="col-md-6">
+            @if (Model.Images != null && Model.Images.Any())
             {
-                <div class="carousel-item @(i == 0 ? "active" : "")">
-                    <img src="~/images/@Model.Images[i].ImageName" class="d-block w-100 img-fluid" alt="Annonsbild">
+                <div id="adCarousel" class="carousel slide shadow-sm rounded" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @for (int i = 0; i < Model.Images.Count; i++)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="~/images/@Model.Images[i].ImageName" class="d-block w-100 ad-image" alt="Annonsbild">
+                            </div>
+                        }
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#adCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Föregående</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#adCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Nästa</span>
+                    </button>
                 </div>
             }
+            else
+            {
+                <p class="text-muted">Ingen bild tillgänglig.</p>
+            }
         </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#adCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Föregående</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#adCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Nästa</span>
-        </button>
+
+        <!-- 🔹 Information om annonsen -->
+        <div class="col-md-6">
+            <h2>@Model.Title</h2>
+            <p class="text-muted">@Model.category?.Name</p>
+            <p>@Model.Description</p>
+            <h4 class="text-success"><strong>@Model.Price kr</strong></h4>
+
+            <dl class="row">
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                    @(Model.Status ? "<span class='text-success'>Till salu</span>" : "<span class='text-danger'>Såld</span>")
+                </dd>
+
+                <dt class="col-sm-4">Skapad av</dt>
+                <dd class="col-sm-8">@Model.CreatedBy</dd>
+
+                @if (!Model.Status)
+                {
+                    <dt class="col-sm-4">Såld till</dt>
+                    <dd class="col-sm-8"><strong>@Model.Buyer</strong></dd>
+                }
+            </dl>
+
+            <!-- 🔹 Köpknapp -->
+            @if (Model.Status)
+            {
+                <form asp-action="Buy" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-success btn-lg w-100">Köp</button>
+                </form>
+            }
+            else
+            {
+                <p class="text-danger"><strong>Såld till: @Model.Buyer</strong></p>
+            }
+
+            <!-- 🔹 Redigera och navigering -->
+            <div class="mt-3">
+                @if (User.Identity.IsAuthenticated && User.Identity.Name == Model.CreatedBy)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Redigera</a>
+                }
+                <a asp-action="Index" class="btn btn-secondary">Tillbaka</a>
+            </div>
+        </div>
     </div>
-}
-else
-{
-    <p>Ingen bild tillgänglig.</p>
-}
-
-    <dl class="row mt-3">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Price) kr
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.status)
-        </dt>
-        <dd class="col-sm-10">
-            @(Model.status ? "Aktiv" : "Inaktiv")
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedBy)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.CreatedBy)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.category)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.category.Name)
-        </dd>
-    </dl>
 </div>
 
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Redigera</a>
-    <a asp-action="Index" class="btn btn-secondary">Tillbaka till listan</a>
-</div>
+<!-- 🔹 Styling -->
+<style>
+    .ad-image {
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .container {
+        max-width: 800px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+</style>

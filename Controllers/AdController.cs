@@ -10,6 +10,7 @@ using projekt.Data;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Jpeg;
+using Microsoft.AspNetCore.Authorization;
 
 namespace projekt.Controllers
 {
@@ -26,14 +27,26 @@ namespace projekt.Controllers
         }
 
         // GET: Ad
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-                var ads = _context.Ads
-        .Include(a => a.Images)  // 🔹 LÄGG TILL DENNA RAD
-        .Include(a => a.category);
+            var ads = _context.Ads
+                .Include(a => a.Images)
+                .Include(a => a.category)
+                .Where(a => a.Status); // Visa endast aktiva annonser
 
-        return View(await ads.ToListAsync());
+            // Om användaren har skrivit något i sökrutan, filtrera resultaten
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                ads = ads.Where(a =>
+                    a.Title.Contains(searchString) ||
+                    a.Description.Contains(searchString) ||
+                    (a.category != null && a.category.Name.Contains(searchString)) || //Undvik null-exception
+                    a.CreatedBy.Contains(searchString));
+            }
+
+            return View(await ads.ToListAsync()); //Se till att anropet är async
         }
+
 
         // GET: Ad/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -111,6 +124,32 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
     return View(ad);
 }
 
+[HttpPost]
+[ValidateAntiForgeryToken]
+[Authorize] // Kräver att användaren är inloggad
+public async Task<IActionResult> Buy(int id)
+{
+    var ad = await _context.Ads.FindAsync(id);
+    if (ad == null)
+    {
+        return NotFound();
+    }
+
+    // Kolla om annonsen redan är såld
+    if (!ad.Status)
+    {
+        return BadRequest("Denna vara är redan såld.");
+    }
+
+    // Markera varan som såld och spara köparen
+    ad.Status = false;
+    ad.Buyer = User.Identity?.Name; // Sparar användaren som köpte varan
+    await _context.SaveChangesAsync();
+
+    return RedirectToAction(nameof(Index));
+}
+
+
         // GET: Ad/Edit/5
 public async Task<IActionResult> Edit(int? id)
 {
@@ -131,6 +170,26 @@ public async Task<IActionResult> Edit(int? id)
     ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
     return View(ad);
 }
+
+[Authorize] // Kräver att användaren är inloggad
+public async Task<IActionResult> MyAds()
+{
+    var userName = User.Identity?.Name;
+
+    if (userName == null)
+    {
+        return RedirectToAction("Login", "Account");
+    }
+
+    var myAds = await _context.Ads
+        .Include(a => a.Images)
+        .Include(a => a.category)
+        .Where(a => a.CreatedBy == userName)
+        .ToListAsync();
+
+    return View(myAds);
+}
+
 
 
         // POST: Ad/Edit/5

@@ -23,7 +23,8 @@ namespace moment5.Models
         [Display(Name = "Pris")]
         public required int Price { get; set; }
 
-        public bool status { get; set; } = true; // Om annonsen är aktiv eller inte
+        [Display(Name = "Status")]
+        public bool Status { get; set; } = true; // Standard: Annons är aktiv
 
         [Display(Name = "Skapad av")]
         public string? CreatedBy { get; set; } // Användare som skapade annonsen
@@ -31,11 +32,14 @@ namespace moment5.Models
         public int? CategoryId { get; set; }
         public Category? category { get; set; }
 
-        // Relation till bilder
+        // 🔹 Relation till bilder
         public virtual List<AdImage> Images { get; set; } = new();
 
-        // För att ta emot uppladdade bilder (icke-mappad till DB)
+        // 🔹 För att ta emot uppladdade bilder (icke-mappad till DB)
         [NotMapped]
         public List<IFormFile>? ImageFiles { get; set; }
+
+        [Display(Name = "Såld till")]
+        public string? Buyer { get; set; }
     }
 }

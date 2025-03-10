@@ -6,38 +6,113 @@
 
 <h1 class="mb-4">Alla annonser</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-success mb-3">Lägg till ny annons</a>
-</p>
+@if (User.Identity.IsAuthenticated)
+{
+    <p>
+        <a asp-action="Create" class="btn btn-success mb-3">Lägg till ny annons</a>
+    </p>
+}
+
+<form asp-action="Index" method="get" class="mb-3 d-flex">
+    <input type="text" name="searchString" class="form-control me-2" placeholder="Sök annonser..." value="@Context.Request.Query["searchString"]">
+    <button type="submit" class="btn btn-primary">Sök</button>
+</form>
 
 <div class="container">
     <div class="row">
-        @foreach (var ad in Model)
+        @foreach (var ad in Model.Where(a => a.Status)) // Dölj sålda annonser
         {
             <div class="col-md-4 col-lg-3 mb-4">
-                <div class="card h-100 shadow-sm">
-                    @if (ad.Images != null && ad.Images.Any())
+                <div class="card h-100 shadow-sm ad-card position-relative">
+                    
+                    <!-- Gör kortet klickbart till Details -->
+                    <a asp-action="Details" asp-route-id="@ad.Id" class="stretched-link"></a>
+
+                    <div class="image-container">
+                        @if (ad.Images != null && ad.Images.Any())
                         {
                             <img src="@Url.Content("~/images/" + ad.Images.First().ImageName)" class="card-img-top img-fluid" alt="@ad.Title">
-
                         }
                         else
                         {
                             <img src="~/images/default.png" class="card-img-top img-fluid" alt="Ingen bild">
                         }
-                    <div class="card-body">
-                        <h5 class="card-title">@ad.Title</h5>
+                    </div>
+
+                    <div class="card-body text-center">
+                        <h6 class="card-title text-truncate">@ad.Title</h6>
                         <p class="card-text text-muted">@ad.category?.Name</p>
-                        <p class="card-text">@ad.Description.Substring(0, Math.Min(50, ad.Description.Length))...</p>
+                        <p class="card-text text-truncate">@ad.Description</p>
                         <p class="card-text"><strong>@ad.Price kr</strong></p>
                     </div>
+
+                    <!-- 🔹 NYTT: Köpknappen måste vara utanför <a> -->
                     <div class="card-footer d-flex justify-content-between">
-                        <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
-                        <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
-                        <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
+                        <div>
+                            <form asp-action="Buy" asp-route-id="@ad.Id" method="post" class="buy-form">
+                                <button type="submit" class="btn btn-success btn-sm">Köp</button>
+                            </form>
+                        </div>
+
+                        <!-- Visa "Redigera" och "Ta bort" endast om den inloggade användaren är skaparen -->
+                        @if (User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
+                        {
+                            <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
+                            <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
+                        }
                     </div>
-                </div>        
+                </div>
             </div>
         }
     </div>
 </div>
+
+<script src="~/js/search.js"></script>
+
+<!-- CSS: Förbättrad styling -->
+<style>
+    .ad-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .ad-card:hover {
+        transform: scale(1.03);
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px; /* Fixad höjd */
+        overflow: hidden;
+    }
+
+    .image-container img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: cover;
+    }
+
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 🔹 Fix för att köpknappen ska fungera trots klickbart kort */
+    .buy-form {
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-footer a {
+        position: relative;
+        z-index: 2;
+    }
+</style>
+
+
