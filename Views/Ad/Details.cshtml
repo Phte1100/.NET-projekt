@@ -57,7 +57,10 @@
             <!-- Köpknapp -->
             @if (Model.Status)
             {
-<a asp-action="BuyRedirect" asp-route-id="@Model.Id" class="btn btn-success btn-lg w-100">Köp</a>
+                <form asp-action="Buy" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-success btn-lg w-100">Köp</button>
+</form>
+
             }
             else
             {

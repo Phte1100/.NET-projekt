@@ -4,7 +4,11 @@
     ViewData["Title"] = "Mina annonser";
 }
 
-<h1>Mina annonser</h1>
+<h1>Hej, @(User.Identity?.IsAuthenticated ?? false ? User.Identity.Name : "")!</h1>
+
+<p class="lead">
+    Här kan du se alla dina annonser. Du kan redigera, ta bort eller ångra ett köp om annonsen redan är såld.
+</p>
 
 <table class="table">
     <thead>
@@ -34,6 +38,12 @@
                     }
                 </td>
                 <td>
+                    @if (!ad.Status)
+                    {
+                        <form asp-action="UndoSale" asp-route-id="@ad.Id" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-secondary btn-sm">Ångra köp</button>
+                        </form>
+                    }
                     <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
                     <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
                     <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>

@@ -1,0 +1,23 @@
+﻿@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Logga ut";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<header class="text-center mt-5">
+    <h1 class="mb-3">@ViewData["Title"]</h1>
+    
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        <p class="lead">Är du säker på att du vill logga ut?</p>
+        <form class="d-inline-block" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+            <button type="submit" class="btn btn-danger btn-lg">Logga ut</button>
+        </form>
+    }
+    else
+    {
+        <p class="lead text-success">Du har loggats ut.</p>
+        <a asp-area="" asp-controller="Ad" asp-action="Index" class="btn btn-primary">Tillbaka till annonser</a>
+    }
+</header>

@@ -127,6 +127,7 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
         ad.CreatedBy = User.Identity?.Name ?? "Okänd";
         _context.Add(ad);
         await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Annonsen har skapats!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -135,8 +136,44 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
 }
 
 [Authorize]
-[HttpGet]
+[HttpPost]
+[ValidateAntiForgeryToken]
 public async Task<IActionResult> Buy(int id)
+{
+    if (!User.Identity?.IsAuthenticated ?? true)
+    {
+        return RedirectToPage("/Identity/Account/Login", new { returnUrl = "/Ad/Index" });
+    }
+
+    var ad = await _context.Ads.FindAsync(id);
+    if (ad == null)
+    {
+        return NotFound();
+    }
+
+    if (!ad.Status)
+    {
+        return BadRequest("Denna vara är redan såld.");
+    }
+
+    ad.Status = false;
+    ad.Buyer = User.Identity?.Name ?? "Okänd köpare";
+    await _context.SaveChangesAsync();
+
+    TempData["SuccessMessage"] = "Köp genomfört!";
+    
+    return RedirectToAction("Index"); // Efter köp, gå till Index
+}
+
+
+
+
+
+
+[Authorize]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> UndoSale(int id)
 {
     var ad = await _context.Ads.FindAsync(id);
     if (ad == null)
@@ -144,74 +181,20 @@ public async Task<IActionResult> Buy(int id)
         return NotFound();
     }
 
-    return View("Details", ad);
-}
-
-
-[Authorize]
-[HttpGet]
-public IActionResult BuyRedirect(int id)
-{
-    if (!User.Identity?.IsAuthenticated ?? true) 
+    if (ad.Status) 
     {
-        return RedirectToPage("/Identity/Account/Login", new { returnUrl = Url.Action("Buy", "Ad", new { id }) });
+        return BadRequest("Annonsen är redan till salu.");
     }
 
-    return RedirectToAction("Details", new { id });
+    // Ångra försäljningen
+    ad.Status = true;
+    ad.Buyer = null; // Tar bort köparens namn
+    await _context.SaveChangesAsync();
+
+    TempData["SuccessMessage"] = "Köpet har ångrats och annonsen är nu till salu igen!";
+    return RedirectToAction(nameof(MyAds));
 }
 
-
-
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Buy(int id, string? returnUrl = null)
-        {
-            if (!User.Identity?.IsAuthenticated ?? true)
-            {
-                return RedirectToPage("/Identity/Account/Login", new { returnUrl = Url.Action("Details", new { id }) });
-            }
-
-            var ad = await _context.Ads.FindAsync(id);
-            if (ad == null)
-            {
-                return NotFound();
-            }
-
-            if (!ad.Status)
-            {
-                return BadRequest("Denna vara är redan såld.");
-            }
-
-            ad.Status = false;
-            ad.Buyer = User.Identity?.Name ?? "Okänd köpare";
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction("Details", new { id });
-        }
-
-
-
-        // GET: Ad/Edit/5
-public async Task<IActionResult> Edit(int? id)
-{
-    if (id == null)
-    {
-        return NotFound();
-    }
-
-    var ad = await _context.Ads
-        .Include(a => a.Images)
-        .FirstOrDefaultAsync(m => m.Id == id);
-
-    if (ad == null)
-    {
-        return NotFound();
-    }
-
-    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
-    return View(ad);
-}
 
 [Authorize] // Kräver att användaren är inloggad
 public async Task<IActionResult> MyAds()
@@ -252,6 +235,7 @@ public async Task<IActionResult> MyAds()
                 {
                     _context.Update(ad);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Ändring genomförd!";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -301,6 +285,7 @@ public async Task<IActionResult> MyAds()
             }
 
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Annons borttagen!";
             return RedirectToAction(nameof(Index));
         }
 

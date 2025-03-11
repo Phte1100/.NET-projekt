@@ -17,15 +17,19 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Identity/Account/Login";  // Standard inloggningsväg
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied"; // Standard vid nekad åtkomst
-    options.LogoutPath = "/Identity/Account/Logout"; // Standard Logout URL
-    options.Events.OnRedirectToLogout = context =>
+    options.LoginPath = "/Identity/Account/Login"; // Standard inloggningsväg
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+
+    options.Events.OnRedirectToLogin = context =>
     {
-        context.Response.Redirect("/Ad/Index"); // Omdirigera till annonserna efter utloggning
+        context.Response.Redirect("/Identity/Account/Login?returnUrl=/Ad/Index");
         return Task.CompletedTask;
     };
 });
+
+
+
+
 
 builder.Services.AddControllersWithViews();
 

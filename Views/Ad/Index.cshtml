@@ -4,7 +4,14 @@
     ViewData["Title"] = "Annonser";
 }
 
-<h1 class="mb-4">Alla annonser</h1>
+<h1>Välkommen @(User.Identity?.IsAuthenticated ?? false ? User.Identity.Name : "")!</h1>
+
+<p class="lead">
+    Här hittar du alla annonser. Bläddra igenom annonserna, använd sökfunktionen eller filtrera efter kategori.<br>
+    Om du är inloggad kan du även skapa egna annonser eller köpa produkter direkt.
+</p>
+
+<h2 class="mb-4">Alla annonser</h2>
 
 @if (User.Identity != null && User.Identity.IsAuthenticated)
 {
@@ -35,44 +42,41 @@
         @foreach (var ad in Model.Where(a => a.Status)) // Dölj sålda annonser
         {
             <div class="col-md-4 col-lg-3 mb-4">
-                <div class="card h-100 shadow-sm ad-card position-relative">
-                    
-                    <a asp-action="Details" asp-route-id="@ad.Id" class="stretched-link"></a>
+<div class="card h-100 shadow-sm ad-card position-relative">
+    <a asp-action="Details" asp-route-id="@ad.Id" class="stretched-link"></a>
 
-                    <div class="image-container">
-                        @if (ad.Images != null && ad.Images.Any())
-                        {
-                            <img src="@Url.Content("~/images/" + ad.Images.First().ImageName)" class="card-img-top img-fluid" alt="@ad.Title">
-                        }
-                        else
-                        {
-                            <img src="~/images/default.png" class="card-img-top img-fluid" alt="Ingen bild">
-                        }
-                    </div>
+    <div class="image-container">
+        @if (ad.Images != null && ad.Images.Any())
+        {
+            <img src="@Url.Content("~/images/" + ad.Images.First().ImageName)" class="card-img-top img-fluid" alt="@ad.Title">
+        }
+        else
+        {
+            <img src="~/images/default.png" class="card-img-top img-fluid" alt="Ingen bild">
+        }
+    </div>
 
-                    <div class="card-body text-center">
-                        <h6 class="card-title text-truncate">@ad.Title</h6>
-                        <p class="card-text text-muted">@ad.category?.Name</p>
-                        <p class="card-text text-truncate">@ad.Description</p>
-                        <p class="card-text"><strong>@ad.Price kr</strong></p>
-                    </div>
+    <div class="card-body text-center">
+        <h6 class="card-title text-truncate">@ad.Title</h6>
+        <p class="card-text text-muted">@ad.category?.Name</p>
+        <p class="card-text text-truncate">@ad.Description</p>
+        <p class="card-text"><strong>@ad.Price kr</strong></p>
+    </div>
 
-                    <div class="card-footer d-flex justify-content-between">
-                        <div>
-                            <form asp-action="BuyRedirect" asp-route-id="@ad.Id" method="get">
-                                <button type="submit" class="btn btn-success btn-sm">Köp</button>
-                            </form>
-                        </div>
+    <div class="card-footer d-flex justify-content-between">
+        <div>
+            <form asp-action="Buy" asp-route-id="@ad.Id" method="post" class="buy-form">
+                <button type="submit" class="btn btn-success btn-sm">Köp</button>
+            </form>
+        </div>
 
-                        <!-- Visa "Redigera" och "Ta bort" endast om den inloggade användaren är skaparen -->
-                        @if (User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
-
-                        {
-                            <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
-                            <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
-                        }
-                    </div>
-                </div>
+        @if (User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
+        {
+            <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
+            <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
+        }
+    </div>
+</div>
             </div>
         }
     </div>
@@ -123,6 +127,16 @@
         position: relative;
         z-index: 2;
     }
+    .buy-form {
+    position: relative;
+    z-index: 2;
+}
+
+.card-footer a {
+    position: relative;
+    z-index: 2;
+}
+
 </style>
 
 
