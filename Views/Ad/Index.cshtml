@@ -6,7 +6,7 @@
 
 <h1 class="mb-4">Alla annonser</h1>
 
-@if (User.Identity.IsAuthenticated)
+@if (User.Identity != null && User.Identity.IsAuthenticated)
 {
     <p>
         <a asp-action="Create" class="btn btn-success mb-3">Lägg till ny annons</a>
@@ -18,6 +18,18 @@
     <button type="submit" class="btn btn-primary">Sök</button>
 </form>
 
+@if (ViewBag.Categories != null)
+{
+    <div class="btn-group d-flex mb-3" role="group">
+        <a asp-action="Index" class="btn btn-outline-secondary">Alla</a>
+        @foreach (var category in ViewBag.Categories)
+        {
+            <a asp-action="Index" asp-route-categoryId="@category.Id" class="btn btn-outline-secondary">@category.Name</a>
+        }
+    </div>
+}
+
+
 <div class="container">
     <div class="row">
         @foreach (var ad in Model.Where(a => a.Status)) // Dölj sålda annonser
@@ -25,7 +37,6 @@
             <div class="col-md-4 col-lg-3 mb-4">
                 <div class="card h-100 shadow-sm ad-card position-relative">
                     
-                    <!-- Gör kortet klickbart till Details -->
                     <a asp-action="Details" asp-route-id="@ad.Id" class="stretched-link"></a>
 
                     <div class="image-container">
@@ -46,16 +57,16 @@
                         <p class="card-text"><strong>@ad.Price kr</strong></p>
                     </div>
 
-                    <!-- 🔹 NYTT: Köpknappen måste vara utanför <a> -->
                     <div class="card-footer d-flex justify-content-between">
                         <div>
-                            <form asp-action="Buy" asp-route-id="@ad.Id" method="post" class="buy-form">
+                            <form asp-action="BuyRedirect" asp-route-id="@ad.Id" method="get">
                                 <button type="submit" class="btn btn-success btn-sm">Köp</button>
                             </form>
                         </div>
 
                         <!-- Visa "Redigera" och "Ta bort" endast om den inloggade användaren är skaparen -->
-                        @if (User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
+                        @if (User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
+
                         {
                             <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
                             <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
@@ -67,9 +78,8 @@
     </div>
 </div>
 
-<script src="~/js/search.js"></script>
 
-<!-- CSS: Förbättrad styling -->
+
 <style>
     .ad-card {
         transition: transform 0.2s, box-shadow 0.2s;
@@ -103,7 +113,7 @@
         text-overflow: ellipsis;
     }
 
-    /* 🔹 Fix för att köpknappen ska fungera trots klickbart kort */
+    /*  Fix för att köpknappen ska fungera trots klickbart kort */
     .buy-form {
         position: relative;
         z-index: 2;

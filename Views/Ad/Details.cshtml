@@ -43,10 +43,6 @@
             <h4 class="text-success"><strong>@Model.Price kr</strong></h4>
 
             <dl class="row">
-                <dt class="col-sm-4">Status</dt>
-                <dd class="col-sm-8">
-                    @(Model.Status ? "<span class='text-success'>Till salu</span>" : "<span class='text-danger'>Såld</span>")
-                </dd>
 
                 <dt class="col-sm-4">Skapad av</dt>
                 <dd class="col-sm-8">@Model.CreatedBy</dd>
@@ -58,21 +54,19 @@
                 }
             </dl>
 
-            <!-- 🔹 Köpknapp -->
+            <!-- Köpknapp -->
             @if (Model.Status)
             {
-                <form asp-action="Buy" asp-route-id="@Model.Id" method="post">
-                    <button type="submit" class="btn btn-success btn-lg w-100">Köp</button>
-                </form>
+<a asp-action="BuyRedirect" asp-route-id="@Model.Id" class="btn btn-success btn-lg w-100">Köp</a>
             }
             else
             {
                 <p class="text-danger"><strong>Såld till: @Model.Buyer</strong></p>
             }
 
-            <!-- 🔹 Redigera och navigering -->
+            <!-- Redigera och navigering -->
             <div class="mt-3">
-                @if (User.Identity.IsAuthenticated && User.Identity.Name == Model.CreatedBy)
+                @if (User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == Model.CreatedBy)
                 {
                     <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Redigera</a>
                 }
@@ -95,6 +89,5 @@
         background: #fff;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     }
 </style>

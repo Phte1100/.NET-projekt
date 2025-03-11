@@ -27,24 +27,34 @@ namespace projekt.Controllers
         }
 
         // GET: Ad
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, int? categoryId)
         {
             var ads = _context.Ads
                 .Include(a => a.Images)
                 .Include(a => a.category)
                 .Where(a => a.Status); // Visa endast aktiva annonser
 
-            // Om användaren har skrivit något i sökrutan, filtrera resultaten
-            if (!string.IsNullOrEmpty(searchString))
+            if (categoryId.HasValue)
             {
-                ads = ads.Where(a =>
-                    a.Title.Contains(searchString) ||
-                    a.Description.Contains(searchString) ||
-                    (a.category != null && a.category.Name.Contains(searchString)) || //Undvik null-exception
-                    a.CreatedBy.Contains(searchString));
+                ads = ads.Where(a => a.CategoryId == categoryId);
             }
 
-            return View(await ads.ToListAsync()); //Se till att anropet är async
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                string lowerSearch = searchString.ToLower(); // Konvertera söktermen till gemener
+
+                ads = ads.Where(a =>
+                    a.Title.ToLower().Contains(lowerSearch) ||
+                    a.Description.ToLower().Contains(lowerSearch) ||
+                    (a.category != null && a.category.Name.ToLower().Contains(lowerSearch)) || // Kontrollera att category inte är null
+                    (a.CreatedBy != null && a.CreatedBy.ToLower().Contains(lowerSearch)) // Kontrollera att CreatedBy inte är null
+                );
+            }
+
+            var categories = await _context.Categories.ToListAsync();
+            ViewBag.Categories = categories;
+
+            return View(await ads.ToListAsync());
         }
 
 
@@ -124,9 +134,8 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
     return View(ad);
 }
 
-[HttpPost]
-[ValidateAntiForgeryToken]
-[Authorize] // Kräver att användaren är inloggad
+[Authorize]
+[HttpGet]
 public async Task<IActionResult> Buy(int id)
 {
     var ad = await _context.Ads.FindAsync(id);
@@ -135,19 +144,52 @@ public async Task<IActionResult> Buy(int id)
         return NotFound();
     }
 
-    // Kolla om annonsen redan är såld
-    if (!ad.Status)
+    return View("Details", ad);
+}
+
+
+[Authorize]
+[HttpGet]
+public IActionResult BuyRedirect(int id)
+{
+    if (!User.Identity?.IsAuthenticated ?? true) 
     {
-        return BadRequest("Denna vara är redan såld.");
+        return RedirectToPage("/Identity/Account/Login", new { returnUrl = Url.Action("Buy", "Ad", new { id }) });
     }
 
-    // Markera varan som såld och spara köparen
-    ad.Status = false;
-    ad.Buyer = User.Identity?.Name; // Sparar användaren som köpte varan
-    await _context.SaveChangesAsync();
-
-    return RedirectToAction(nameof(Index));
+    return RedirectToAction("Details", new { id });
 }
+
+
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Buy(int id, string? returnUrl = null)
+        {
+            if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                return RedirectToPage("/Identity/Account/Login", new { returnUrl = Url.Action("Details", new { id }) });
+            }
+
+            var ad = await _context.Ads.FindAsync(id);
+            if (ad == null)
+            {
+                return NotFound();
+            }
+
+            if (!ad.Status)
+            {
+                return BadRequest("Denna vara är redan såld.");
+            }
+
+            ad.Status = false;
+            ad.Buyer = User.Identity?.Name ?? "Okänd köpare";
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Details", new { id });
+        }
+
 
 
         // GET: Ad/Edit/5
@@ -159,7 +201,7 @@ public async Task<IActionResult> Edit(int? id)
     }
 
     var ad = await _context.Ads
-        .Include(a => a.Images)  // 🔹 LÄGG TILL DENNA RAD
+        .Include(a => a.Images)
         .FirstOrDefaultAsync(m => m.Id == id);
 
     if (ad == null)
@@ -270,39 +312,32 @@ public async Task<IActionResult> MyAds()
 private void CreateImageFiles(string fileName)
 {
     string imagePath = Path.Combine(wwwRootPath, "images", fileName);
-    string extension = Path.GetExtension(fileName).ToLower(); // Hämta filändelsen
+    string extension = Path.GetExtension(fileName).ToLower();
 
     if (string.IsNullOrEmpty(extension))
     {
         return;
     }
 
-    // Skapa ett nytt filnamn för JPEG
     string thumbFileName = $"thumb_{Path.GetFileNameWithoutExtension(fileName)}.jpg";
     string thumbPath = Path.Combine(wwwRootPath, "images", thumbFileName);
 
     try
     {
-        Task.Delay(500).Wait(); // Vänta lite så att filen är helt sparad
+        Task.Delay(500).Wait();
 
         using (var stream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
         {
             using var image = Image.Load(stream);
-
-            // Anpassa bildstorlek (skapa en miniatyr)
             image.Mutate(x => x.Resize(image.Width / 4, image.Height / 4));
 
-            // Spara som JPEG
-            var jpegEncoder = new JpegEncoder
-            {
-                Quality = 80 // Justera kvaliteten mellan 0-100 (80 ger bra balans mellan storlek & kvalitet)
-            };
+            var jpegEncoder = new JpegEncoder { Quality = 80 };
             image.Save(thumbPath, jpegEncoder);
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Fel vid skapande av miniatyrbild: {ex.Message}");
+        Console.WriteLine($"[Fel vid bildhantering]: {ex.Message}");
     }
 }}
 
