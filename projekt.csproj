@@ -1,13 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-<PropertyGroup>
+  <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-projekt-097e0cd8-708c-4047-870c-e574f8164f7f</UserSecretsId>
-    <PublishDir>$(SolutionDir)publish\</PublishDir>
-</PropertyGroup>
-
+  </PropertyGroup>
 
   <ItemGroup>
     <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
