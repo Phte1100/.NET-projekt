@@ -24,19 +24,21 @@ namespace projekt.Controllers
             _context = context;
             _hostEnvironment = hostEnvironment;
             wwwRootPath = _hostEnvironment.WebRootPath;
+
+            Console.WriteLine($"WWW Root Path: {wwwRootPath}"); // Logga sökvägen
         }
 
         // GET: Ad
         public async Task<IActionResult> Index(string searchString, int? categoryId)
         {
-            var ads = _context.Ads
+            var ads = await _context.Ads
                 .Include(a => a.Images)
                 .Include(a => a.category)
-                .Where(a => a.Status); // Visa endast aktiva annonser
+                .ToListAsync(); // <-- Lägg till `await` här!
 
             if (categoryId.HasValue)
             {
-                ads = ads.Where(a => a.CategoryId == categoryId);
+                ads = ads.Where(a => a.CategoryId == categoryId).ToList();
             }
 
             if (!string.IsNullOrEmpty(searchString))
@@ -48,15 +50,14 @@ namespace projekt.Controllers
                     a.Description.ToLower().Contains(lowerSearch) ||
                     (a.category != null && a.category.Name.ToLower().Contains(lowerSearch)) || // Kontrollera att category inte är null
                     (a.CreatedBy != null && a.CreatedBy.ToLower().Contains(lowerSearch)) // Kontrollera att CreatedBy inte är null
-                );
+                ).ToList(); // <
             }
 
             var categories = await _context.Categories.ToListAsync(); // Hämta alla kategorier
             ViewBag.Categories = categories;
 
-            return View(await ads.ToListAsync());
+            return View(ads);
         }
-
 
         // GET: Ad/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -100,22 +101,29 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
         {
             foreach (var imageFile in ad.ImageFiles)
             {
-                string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName); // Filnamn utan filändelse
-                string extension = Path.GetExtension(imageFile.FileName); // Filändelse
-                string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}"; // Unikt filnamn
-                string filePath = Path.Combine(wwwRootPath, "images", uniqueFileName); // Sökväg till fil
+                string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
+                string extension = Path.GetExtension(imageFile.FileName);
+                string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
+                string filePath = Path.Combine(wwwRootPath, "images", uniqueFileName);
 
-                // Spara bilden
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                // **Logga filens sökväg**
+                Console.WriteLine($"📂 Försöker spara bild till: {filePath}");
+
+                try
                 {
-                    await imageFile.CopyToAsync(fileStream);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(fileStream);
+                    }
+
+                    Console.WriteLine($"✅ Bild sparad: {filePath}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Fel vid bildspara: {ex.Message}");
                 }
 
-                // Skapa miniatyr
-                CreateImageFiles(uniqueFileName);
-
-
-                // Lägg till i databasen
+                // Lägg till bilden i databasen
                 ad.Images.Add(new AdImage { ImageName = uniqueFileName });
             }
         }
@@ -134,6 +142,7 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
     ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
     return View(ad);
 }
+
 
 [Authorize]
 [HttpPost]
