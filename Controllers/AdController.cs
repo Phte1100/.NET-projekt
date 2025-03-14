@@ -23,7 +23,8 @@ namespace projekt.Controllers
         {
             _context = context;
             _hostEnvironment = hostEnvironment;
-            wwwRootPath = _hostEnvironment.WebRootPath;
+            wwwRootPath = Path.Combine(_hostEnvironment.WebRootPath, "wwwroot");
+
 
             Console.WriteLine($"WWW Root Path: {wwwRootPath}"); // Logga sökvägen
         }
@@ -104,7 +105,10 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
                 string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
                 string extension = Path.GetExtension(imageFile.FileName);
                 string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
-                string filePath = Path.Combine(wwwRootPath, "images", uniqueFileName);
+                string imageFolder = Path.Combine(wwwRootPath, "images");
+                Directory.CreateDirectory(imageFolder); // Se till att mappen finns
+                string filePath = Path.Combine(imageFolder, uniqueFileName);
+
 
                 // **Logga filens sökväg**
                 Console.WriteLine($"📂 Försöker spara bild till: {filePath}");
