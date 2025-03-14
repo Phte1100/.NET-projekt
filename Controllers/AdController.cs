@@ -14,12 +14,12 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace projekt.Controllers
 {
-    public class AdController : Controller
+    public class AdController : Controller // Ändra från ControllerBase till Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _hostEnvironment;
         private readonly string wwwRootPath;
-        public AdController(ApplicationDbContext context, IWebHostEnvironment hostEnvironment)
+        public AdController(ApplicationDbContext context, IWebHostEnvironment hostEnvironment) // Lägg till IWebHostEnvironment
         {
             _context = context;
             _hostEnvironment = hostEnvironment;
@@ -51,7 +51,7 @@ namespace projekt.Controllers
                 );
             }
 
-            var categories = await _context.Categories.ToListAsync();
+            var categories = await _context.Categories.ToListAsync(); // Hämta alla kategorier
             ViewBag.Categories = categories;
 
             return View(await ads.ToListAsync());
@@ -100,10 +100,10 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
         {
             foreach (var imageFile in ad.ImageFiles)
             {
-                string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
-                string extension = Path.GetExtension(imageFile.FileName);
-                string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
-                string filePath = Path.Combine(wwwRootPath, "images", uniqueFileName);
+                string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName); // Filnamn utan filändelse
+                string extension = Path.GetExtension(imageFile.FileName); // Filändelse
+                string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}"; // Unikt filnamn
+                string filePath = Path.Combine(wwwRootPath, "images", uniqueFileName); // Sökväg till fil
 
                 // Spara bilden
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -142,7 +142,7 @@ public async Task<IActionResult> Buy(int id)
 {
     if (!User.Identity?.IsAuthenticated ?? true)
     {
-        return RedirectToPage("/Identity/Account/Login", new { returnUrl = "/Ad/Index" });
+        return RedirectToPage("/Identity/Account/Login", new { returnUrl = "/Ad/Index" }); // Om användaren inte är inloggad, skicka till inloggningssidan
     }
 
     var ad = await _context.Ads.FindAsync(id);
@@ -209,7 +209,7 @@ public async Task<IActionResult> MyAds()
     var myAds = await _context.Ads
         .Include(a => a.Images)
         .Include(a => a.category)
-        .Where(a => a.CreatedBy == userName)
+        .Where(a => a.CreatedBy == userName || a.Buyer == userName)
         .ToListAsync();
 
     return View(myAds);
@@ -273,19 +273,54 @@ public async Task<IActionResult> MyAds()
             return View(ad);
         }
 
+        // GET: Ad/Edit/5
+        [Authorize]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var ad = await _context.Ads
+                .Include(a => a.Images)
+                .FirstOrDefaultAsync(m => m.Id == id);
+                
+            if (ad == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
+            return View(ad);
+        }
+
+
         // POST: Ad/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var ad = await _context.Ads.FindAsync(id);
+            var ad = await _context.Ads.Include(a => a.Images).FirstOrDefaultAsync(a => a.Id == id);
+            
             if (ad != null)
             {
+                // Radera bilder från wwwroot/images/
+                foreach (var image in ad.Images)
+                {
+                    string filePath = Path.Combine(wwwRootPath, "images", image.ImageName);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+
                 _context.Ads.Remove(ad);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Annonsen har raderats!";
             }
 
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Annons borttagen!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -294,37 +329,66 @@ public async Task<IActionResult> MyAds()
             return _context.Ads.Any(e => e.Id == id);
         }
 
-private void CreateImageFiles(string fileName)
-{
-    string imagePath = Path.Combine(wwwRootPath, "images", fileName);
-    string extension = Path.GetExtension(fileName).ToLower();
-
-    if (string.IsNullOrEmpty(extension))
-    {
-        return;
-    }
-
-    string thumbFileName = $"thumb_{Path.GetFileNameWithoutExtension(fileName)}.jpg";
-    string thumbPath = Path.Combine(wwwRootPath, "images", thumbFileName);
-
-    try
-    {
-        Task.Delay(500).Wait();
-
-        using (var stream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteImage(int id)
         {
-            using var image = Image.Load(stream);
-            image.Mutate(x => x.Resize(image.Width / 4, image.Height / 4));
+            var image = await _context.AdImages.FindAsync(id);
+            if (image == null)
+            {
+                return NotFound();
+            }
 
-            var jpegEncoder = new JpegEncoder { Quality = 80 };
-            image.Save(thumbPath, jpegEncoder);
+            // Hitta bildfilens sökväg
+            string filePath = Path.Combine(wwwRootPath, "images", image.ImageName);
+            
+            // Radera bilden från filsystemet
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+
+            // Ta bort bilden från databasen
+            _context.AdImages.Remove(image);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Bilden har raderats!";
+            
+            return RedirectToAction("Edit", new { id = image.AdId }); // Skicka tillbaka till Edit-vyn
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[Fel vid bildhantering]: {ex.Message}");
-    }
-}}
+
+        private void CreateImageFiles(string fileName) // Skapa miniatyrbilder
+        {
+            string imagePath = Path.Combine(wwwRootPath, "images", fileName);
+            string extension = Path.GetExtension(fileName).ToLower();
+
+            if (string.IsNullOrEmpty(extension))
+            {
+                return;
+            }
+
+            string thumbFileName = $"thumb_{Path.GetFileNameWithoutExtension(fileName)}.jpg";
+            string thumbPath = Path.Combine(wwwRootPath, "images", thumbFileName);
+
+            try
+            {
+                Task.Delay(500).Wait();
+
+                using (var stream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using var image = Image.Load(stream);
+                    image.Mutate(x => x.Resize(image.Width / 4, image.Height / 4));
+
+                    var jpegEncoder = new JpegEncoder { Quality = 80 };
+                    image.Save(thumbPath, jpegEncoder);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Fel vid bildhantering]: {ex.Message}");
+            }
+        }}
+
 
 
 }

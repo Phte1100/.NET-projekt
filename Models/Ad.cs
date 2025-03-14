@@ -32,10 +32,10 @@ namespace moment5.Models
         public int? CategoryId { get; set; }
         public Category? category { get; set; }
 
-        // 🔹 Relation till bilder
+        // Relation till bilder
         public virtual List<AdImage> Images { get; set; } = new();
 
-        // 🔹 För att ta emot uppladdade bilder (icke-mappad till DB)
+        // För att ta emot uppladdade bilder (icke-mappad till DB)
         [NotMapped]
         public List<IFormFile>? ImageFiles { get; set; }
 

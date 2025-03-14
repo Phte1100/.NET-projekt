@@ -10,45 +10,93 @@
     Här kan du se alla dina annonser. Du kan redigera, ta bort eller ångra ett köp om annonsen redan är såld.
 </p>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Titel</th>
-            <th>Pris</th>
-            <th>Kategori</th>
-            <th>Status</th>
-            <th>Åtgärder</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var ad in Model)
-        {
+<!--  List annonser som skapats av användaren -->
+<h2 class="mt-4">Mina annonser</h2>
+
+@if (Model.Any(a => a.CreatedBy == User.Identity?.Name))
+{
+    <table class="table">
+        <thead>
             <tr>
-                <td>@ad.Title</td>
-                <td>@ad.Price kr</td>
-                <td>@ad.category?.Name</td>
-                <td>
-                    @if (ad.Status)
-                    {
-                        <span class="text-success">Till salu</span>
-                    }
-                    else
-                    {
-                        <span class="text-danger">Såld till @ad.Buyer</span>
-                    }
-                </td>
-                <td>
-                    @if (!ad.Status)
-                    {
-                        <form asp-action="UndoSale" asp-route-id="@ad.Id" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-secondary btn-sm">Ångra köp</button>
-                        </form>
-                    }
-                    <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
-                    <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
-                    <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
-                </td>
+                <th>Titel</th>
+                <th>Pris</th>
+                <th>Kategori</th>
+                <th>Status</th>
+                <th>Åtgärder</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var ad in Model.Where(a => a.CreatedBy == User.Identity?.Name))
+            {
+                <tr>
+                    <td>@ad.Title</td>
+                    <td>@ad.Price kr</td>
+                    <td>@ad.category?.Name</td>
+                    <td>
+                        @if (ad.Status)
+                        {
+                            <span class="text-success">Till salu</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger">Såld till @ad.Buyer</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!ad.Status)
+                        {
+                            <form asp-action="UndoSale" asp-route-id="@ad.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-secondary btn-sm">Ångra köp</button>
+                            </form>
+                        }
+                        <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
+                        <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
+                        <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Du har ännu inte lagt upp några annonser.</p>
+    <a asp-action="Create" class="btn btn-success">Skapa en annons</a>
+}
+
+<!-- Annonser köpt av användaren -->
+<h2 class="mt-5">Fiskeprylar köpta av mig</h2>
+
+@if (Model.Any(a => a.Buyer == User.Identity?.Name))
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Titel</th>
+                <th>Pris</th>
+                <th>Kategori</th>
+                <th>Säljare</th>
+                <th>Åtgärder</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ad in Model.Where(a => a.Buyer == User.Identity?.Name))
+            {
+                <tr>
+                    <td>@ad.Title</td>
+                    <td>@ad.Price kr</td>
+                    <td>@ad.category?.Name</td>
+                    <td>@ad.CreatedBy</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Du har ännu inte köpt några annonser.</p>
+    <a asp-action="Index" class="btn btn-primary">Se alla annonser</a>
+}

@@ -32,7 +32,7 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
-            <!-- Visa befintliga bilder -->
+            <!-- Visa befintliga bilder med radera-knapp -->
             <div class="form-group">
                 <label class="control-label">Befintliga bilder</label>
                 <div class="d-flex flex-wrap">
@@ -43,6 +43,9 @@
                             <div class="m-2 text-center">
                                 <img src="~/images/@image.ImageName" class="img-thumbnail" style="width: 100px; height: auto;" />
                                 <p class="small">@image.ImageName</p>
+                                <form asp-action="DeleteImage" asp-route-id="@image.Id" method="post" class="mt-2">
+                                    <button type="submit" class="btn btn-danger btn-sm">Ta bort</button>
+                                </form>
                             </div>
                         }
                     }

@@ -11,7 +11,7 @@ namespace moment5.Models
         [Required]
         public string ImageName { get; set; } = string.Empty;
 
-        // 🔹 Koppling till en annons
+        // Koppling till en annons
         public int AdId { get; set; }
         public virtual Ad? Ad { get; set; }
     }
