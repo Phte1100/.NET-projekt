@@ -5,7 +5,7 @@ using projekt.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var dbPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "wwwroot", "app.db");
+var dbPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "app.db");
 var connectionString = $"DataSource={dbPath};Cache=Shared";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
