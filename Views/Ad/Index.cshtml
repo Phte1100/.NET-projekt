@@ -4,7 +4,7 @@
     ViewData["Title"] = "Annonser";
 }
 
-<h1>222Välkommen @(User.Identity?.IsAuthenticated ?? false ? User.Identity.Name : "")!</h1>
+<h1>Välkommen @(User.Identity?.IsAuthenticated ?? false ? User.Identity.Name : "")!</h1>
 
 <p class="lead">
     Här hittar du alla annonser. Bläddra igenom annonserna, använd sökfunktionen eller filtrera efter kategori.<br>
@@ -36,107 +36,90 @@
     </div>
 }
 
+@if (Model.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Bild</th>
+                <th>Titel</th>
+                <th>Kategori</th>
+                <th>Beskrivning</th>
+                <th>Pris</th>
+                <th>Status</th>
+                <th>Säljare</th>
+                <th>Åtgärder</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ad in Model)
+            {
+                <tr>
+                    <td>
+                        @if (ad.Images != null && ad.Images.Any())
+                        {
+                            <img src="~/images/@ad.Images.First().ImageName" asp-append-version="true" class="ad-image" alt="@ad.Title">
+                        }
+                        else
+                        {
+                            <img src="https://placehold.co/100x100" class="ad-image" alt="Platsbild">
+                        }
+                    </td>
+                    <td>@ad.Title</td>
+                    <td>@(ad.category?.Name ?? "Okänd")</td>
+                    <td>@ad.Description</td>
+                    <td>@ad.Price kr</td>
+                    <td>
+                        @if (ad.Status)
+                        {
+                            <span class="badge bg-success">Till salu</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Såld</span>
+                            <br>
+                            <small class="text-muted">Såld till: @ad.Buyer</small>
+                        }
+                    </td>
+                    <td>@ad.CreatedBy</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@ad.Id" class="btn btn-primary btn-sm">Visa</a>
 
-<div class="container">
-    <div class="row">
-        @foreach (var ad in Model.Where(a => a.Status)) // Dölj sålda annonser
-        {
-            <div class="col-md-4 col-lg-3 mb-4">
-<div class="card h-100 shadow-sm ad-card position-relative">
-    <a asp-action="Details" asp-route-id="@ad.Id" class="stretched-link"></a>
+                        @if (ad.Status && User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <form asp-action="Buy" asp-route-id="@ad.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-success btn-sm">Köp</button>
+                            </form>
+                        }
 
-    <div class="image-container">
-        @if (ad.Images != null && ad.Images.Any())
-        {
-            <img src="@Url.Content("~/images/" + ad.Images.First().ImageName)" class="card-img-top img-fluid" alt="@ad.Title">
-        }
-        else
-        {
-            <img src="~/images/default.png" class="card-img-top img-fluid" alt="Ingen bild">
-        }
-    </div>
+                        @if (User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
+                        {
+                            <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
+                            <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
 
-    <div class="card-body text-center">
-        <h6 class="card-title text-truncate">@ad.Title</h6>
-        <p class="card-text text-muted">@ad.category?.Name</p>
-        <p class="card-text text-truncate">@ad.Description</p>
-        <p class="card-text"><strong>@ad.Price kr</strong></p>
-    </div>
-
-    <div class="card-footer d-flex justify-content-between">
-        <div>
-            <form asp-action="Buy" asp-route-id="@ad.Id" method="post" class="buy-form">
-                <button type="submit" class="btn btn-success btn-sm">Köp</button>
-            </form>
-        </div>
-
-        @if (User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == ad.CreatedBy)
-        {
-            <a asp-action="Edit" asp-route-id="@ad.Id" class="btn btn-warning btn-sm">Redigera</a>
-            <a asp-action="Delete" asp-route-id="@ad.Id" class="btn btn-danger btn-sm">Ta bort</a>
-        }
-    </div>
-</div>
-            </div>
-        }
-    </div>
-</div>
-
-
+                            @if (!ad.Status) // Om annonsen är såld, visa "Ångra köp"
+                            {
+                                <form asp-action="UndoSale" asp-route-id="@ad.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-secondary btn-sm">Ångra köp</button>
+                                </form>
+                            }
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">Inga annonser hittades.</p>
+}
 
 <style>
-    .ad-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid #ddd;
-        cursor: pointer;
-        position: relative;
-    }
-
-    .ad-card:hover {
-        transform: scale(1.03);
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .image-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 200px; /* Fixad höjd */
-        overflow: hidden;
-    }
-
-    .image-container img {
-        max-height: 100%;
-        max-width: 100%;
+    .ad-image {
+        max-width: 100px;
+        max-height: 100px;
         object-fit: cover;
+        border-radius: 5px;
     }
-
-    .text-truncate {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /*  Fix för att köpknappen ska fungera trots klickbart kort */
-    .buy-form {
-        position: relative;
-        z-index: 2;
-    }
-
-    .card-footer a {
-        position: relative;
-        z-index: 2;
-    }
-    .buy-form {
-    position: relative;
-    z-index: 2;
-}
-
-.card-footer a {
-    position: relative;
-    z-index: 2;
-}
-
 </style>
-
-

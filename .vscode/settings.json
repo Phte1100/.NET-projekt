@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/d8d1234b-18af-4678-94c4-5f55fe98458b/resourceGroups/Fiskeprylar_group-8a74/providers/Microsoft.Web/sites/Fiskeprylar",
+    "appService.deploySubpath": "bin\\Release\\net9.0\\publish"
+}

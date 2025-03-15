@@ -9,11 +9,35 @@
 <h4>Ad</h4>
 <hr />
 <div class="row">
+    <!-- Bilden till vänster -->
     <div class="col-md-4">
+        <h5>Befintlig bild</h5>
+        @if (Model.Images != null && Model.Images.Any())
+        {
+            <div class="d-flex flex-column align-items-start">
+                <img src="~/images/@Model.Images.First().ImageName" class="img-thumbnail mb-2" style="max-width: 250px; height: auto;" />
+                <p class="small">@Model.Images.First().ImageName</p>
+                <form asp-action="DeleteImage" asp-route-id="@Model.Images.First().Id" method="post">
+                    <button type="submit" class="btn btn-danger btn-sm">Ta bort bild</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <p>Ingen bild tillgänglig</p>
+        }
+    </div>
+
+    <!-- Formulär till höger -->
+    <div class="col-md-8">
         <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
             
+            <!-- Behåll CreatedBy genom att lägga det i ett dolt inputfält -->
+            <input type="hidden" asp-for="CreatedBy" />
+
+            <input type="hidden" asp-for="Id" />
+
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
@@ -22,7 +46,7 @@
 
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <textarea asp-for="Description" class="form-control"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
@@ -32,34 +56,10 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
-            <!-- Visa befintliga bilder med radera-knapp -->
+            <!-- Ladda upp en ny bild -->
             <div class="form-group">
-                <label class="control-label">Befintliga bilder</label>
-                <div class="d-flex flex-wrap">
-                    @if (Model.Images != null && Model.Images.Any())
-                    {
-                        foreach (var image in Model.Images)
-                        {
-                            <div class="m-2 text-center">
-                                <img src="~/images/@image.ImageName" class="img-thumbnail" style="width: 100px; height: auto;" />
-                                <p class="small">@image.ImageName</p>
-                                <form asp-action="DeleteImage" asp-route-id="@image.Id" method="post" class="mt-2">
-                                    <button type="submit" class="btn btn-danger btn-sm">Ta bort</button>
-                                </form>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <p>Ingen bild tillgänglig</p>
-                    }
-                </div>
-            </div>
-
-            <!-- Ladda upp nya bilder -->
-            <div class="form-group">
-                <label asp-for="ImageFiles" class="control-label">Lägg till nya bilder</label>
-                <input asp-for="ImageFiles" type="file" multiple class="form-control" accept="image/*" />
+                <label asp-for="ImageFiles" class="control-label">Ladda upp en ny bild</label>
+                <input asp-for="ImageFiles" type="file" class="form-control" accept="image/*" />
                 <span asp-validation-for="ImageFiles" class="text-danger"></span>
             </div>
 
@@ -70,14 +70,14 @@
             </div>
 
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="Spara" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Tillbaka</a>
 </div>
 
 @section Scripts {

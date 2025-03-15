@@ -23,10 +23,8 @@ namespace projekt.Controllers
         {
             _context = context;
             _hostEnvironment = hostEnvironment;
-            wwwRootPath = Path.Combine(_hostEnvironment.WebRootPath, "wwwroot");
+            wwwRootPath = _hostEnvironment.WebRootPath;
 
-
-            Console.WriteLine($"WWW Root Path: {wwwRootPath}"); // Logga sökvägen
         }
 
         // GET: Ad
@@ -100,36 +98,20 @@ public async Task<IActionResult> Create([Bind("Id,Title,Description,Price,ImageF
 
         if (ad.ImageFiles != null && ad.ImageFiles.Any())
         {
-            foreach (var imageFile in ad.ImageFiles)
+            var imageFile = ad.ImageFiles.First(); // Endast första bilden sparas
+            string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
+            string extension = Path.GetExtension(imageFile.FileName);
+            string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
+            string imageFolder = Path.Combine(wwwRootPath, "images");
+            Directory.CreateDirectory(imageFolder); 
+            string filePath = Path.Combine(imageFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
-                string extension = Path.GetExtension(imageFile.FileName);
-                string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
-                string imageFolder = Path.Combine(wwwRootPath, "images");
-                Directory.CreateDirectory(imageFolder); // Se till att mappen finns
-                string filePath = Path.Combine(imageFolder, uniqueFileName);
-
-
-                // **Logga filens sökväg**
-                Console.WriteLine($"📂 Försöker spara bild till: {filePath}");
-
-                try
-                {
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await imageFile.CopyToAsync(fileStream);
-                    }
-
-                    Console.WriteLine($"✅ Bild sparad: {filePath}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ Fel vid bildspara: {ex.Message}");
-                }
-
-                // Lägg till bilden i databasen
-                ad.Images.Add(new AdImage { ImageName = uniqueFileName });
+                await imageFile.CopyToAsync(fileStream);
             }
+
+            ad.Images = new List<AdImage> { new AdImage { ImageName = uniqueFileName } };
         }
         else
         {
@@ -233,39 +215,98 @@ public async Task<IActionResult> MyAds()
         // POST: Ad/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Price,ImageFile,status,CategoryId")] Ad ad)
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Price,CategoryId,CreatedBy,ImageFiles")] Ad ad)
+{
+    if (id != ad.Id)
+    {
+        return NotFound();
+    }
+
+    if (ModelState.IsValid)
+    {
+        try
         {
-            if (id != ad.Id)
+            // Hämta den befintliga annonsen från databasen
+            var existingAd = await _context.Ads
+                .Include(a => a.Images)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (existingAd == null)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // Behåll CreatedBy
+            ad.CreatedBy = existingAd.CreatedBy;
+
+            // Hantera bilduppdatering
+            if (ad.ImageFiles != null && ad.ImageFiles.Any())
             {
-                try
+                // Ta bort gamla bilder från servern
+                foreach (var image in existingAd.Images)
                 {
-                    _context.Update(ad);
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Ändring genomförd!";
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!AdExists(ad.Id))
+                    string oldImagePath = Path.Combine(wwwRootPath, "images", image.ImageName);
+                    if (System.IO.File.Exists(oldImagePath))
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                        System.IO.File.Delete(oldImagePath);
                     }
                 }
-                return RedirectToAction(nameof(Index));
+
+                // Ta bort gamla bilder från databasen
+                _context.AdImages.RemoveRange(existingAd.Images);
+
+                // Spara den nya bilden
+                List<AdImage> newImages = new List<AdImage>();
+                foreach (var imageFile in ad.ImageFiles)
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(imageFile.FileName);
+                    string extension = Path.GetExtension(imageFile.FileName);
+                    string uniqueFileName = $"{fileName.Replace(" ", string.Empty)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
+                    string imagePath = Path.Combine(wwwRootPath, "images", uniqueFileName);
+
+                    using (var fileStream = new FileStream(imagePath, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(fileStream);
+                    }
+
+                    newImages.Add(new AdImage { ImageName = uniqueFileName });
+                }
+
+                ad.Images = newImages;
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
-            return View(ad);
+            else
+            {
+                // Behåll gamla bilder om inga nya laddas upp
+                ad.Images = existingAd.Images;
+            }
+
+            // Uppdatera annonsen i databasen
+            _context.Entry(existingAd).State = EntityState.Detached; // Undvik spårningskonflikter
+            _context.Update(ad);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Annonsen har uppdaterats!";
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!AdExists(ad.Id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", ad.CategoryId);
+    return View(ad);
+}
+
 
         // GET: Ad/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -354,7 +395,7 @@ public async Task<IActionResult> MyAds()
 
             // Hitta bildfilens sökväg
             string filePath = Path.Combine(wwwRootPath, "images", image.ImageName);
-            
+
             // Radera bilden från filsystemet
             if (System.IO.File.Exists(filePath))
             {
@@ -366,9 +407,11 @@ public async Task<IActionResult> MyAds()
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Bilden har raderats!";
-            
-            return RedirectToAction("Edit", new { id = image.AdId }); // Skicka tillbaka till Edit-vyn
+
+            // Se till att användaren stannar på edit-sidan och inte hela annonsen raderas
+            return RedirectToAction("Edit", new { id = image.AdId });
         }
+
 
         private void CreateImageFiles(string fileName) // Skapa miniatyrbilder
         {

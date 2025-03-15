@@ -37,29 +37,18 @@
                 <span asp-validation-for="ImageFiles" class="text-danger"></span>
             </div>
 
-            <p>
-                <a href="#" data-bs-toggle="modal" data-bs-target="#imageUploadModal">Lägg till fler bilder</a>
-            </p>
-
-            <!-- Modal -->
-            <div class="modal fade" id="imageUploadModal" tabindex="-1" aria-labelledby="imageUploadModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Lägg till fler bilder</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="file" id="extraImages" multiple class="form-control" accept="image/*" />
-                            <div id="selectedImages" class="mt-2"></div> <!-- Här visas valda bilder -->
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
-                            <button type="button" class="btn btn-primary" id="addImages">Lägg till bilder</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label asp-for="ImageFiles" class="control-label">Välj en bild</label>
+                <input asp-for="ImageFiles" type="file" class="form-control" accept="image/*" id="imageUpload" />
+                <span asp-validation-for="ImageFiles" class="text-danger"></span>
             </div>
+
+            <!-- Förhandsgranskning av vald bild -->
+            <div id="imagePreviewContainer" class="mt-2" style="display: none;">
+                <p><strong>Förhandsgranskning:</strong></p>
+                <img id="imagePreview" src="" alt="Förhandsgranskning" class="img-thumbnail" style="max-width: 300px;">
+            </div>
+
 
             <div class="form-group">
                 <label asp-for="CategoryId" class="control-label"></label>
@@ -81,52 +70,26 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let extraImagesInput = document.getElementById("extraImages");
-            let mainImageUpload = document.getElementById("mainImageUpload");
-            let addImagesButton = document.getElementById("addImages");
-            let selectedImagesContainer = document.getElementById("selectedImages");
+    document.addEventListener("DOMContentLoaded", function () {
+        let imageInput = document.getElementById("imageUpload");
+        let imagePreview = document.getElementById("imagePreview");
+        let imagePreviewContainer = document.getElementById("imagePreviewContainer");
 
-            let allFiles = []; // Lista för att spara valda filer
+        imageInput.addEventListener("change", function (event) {
+            if (event.target.files.length > 0) {
+                let file = event.target.files[0];
+                let reader = new FileReader();
 
-            // Visa valda bilder i modalen
-            extraImagesInput.addEventListener("change", function (event) {
-                selectedImagesContainer.innerHTML = ""; // Rensa tidigare valda bilder
-                for (let file of event.target.files) {
-                    allFiles.push(file); // Lägg till filerna i listan
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = "block";
+                };
 
-                    let imgPreview = document.createElement("p");
-                    imgPreview.textContent = file.name;
-                    selectedImagesContainer.appendChild(imgPreview);
-                }
-            });
-
-            // Lägg till bilder från modalen till huvudformuläret
-            addImagesButton.addEventListener("click", function () {
-                let dataTransfer = new DataTransfer();
-
-                // Lägg till redan valda bilder från huvudfältet
-                for (let file of mainImageUpload.files) {
-                    dataTransfer.items.add(file);
-                }
-
-                // Lägg till extra bilder från modalen
-                for (let file of allFiles) {
-                    dataTransfer.items.add(file);
-                }
-
-                // Uppdatera huvudfilinputen
-                mainImageUpload.files = dataTransfer.files;
-
-                // Stäng modalen
-                let modal = bootstrap.Modal.getInstance(document.getElementById("imageUploadModal"));
-                modal.hide();
-
-                // Återställ extra filinputen i modalen
-                extraImagesInput.value = "";
-                selectedImagesContainer.innerHTML = "";
-                allFiles = [];
-            });
+                reader.readAsDataURL(file);
+            } else {
+                imagePreviewContainer.style.display = "none";
+            }
         });
-    </script>
+    });
+</script>
 }
