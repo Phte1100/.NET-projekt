@@ -38,6 +38,7 @@
 
 @if (Model.Any())
 {
+    <div class="table-responsive">
     <table class="table table-striped">
         <thead>
             <tr>
@@ -109,6 +110,7 @@
             }
         </tbody>
     </table>
+    </div>
 }
 else
 {
@@ -121,5 +123,11 @@ else
         max-height: 100px;
         object-fit: cover;
         border-radius: 5px;
+    }
+
+    .btn-group {
+    flex-wrap: wrap !important; 
+    justify-content: center;
+    gap: 5px; /* 
     }
 </style>
